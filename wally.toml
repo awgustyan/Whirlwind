@@ -1,0 +1,11 @@
+[package]
+name = "12345/applecollectormatter"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+Knit = "sleitnick/knit@1.5.1"
+Trove = "sleitnick/trove@1.0.0"
+Promise = "evaera/promise@4.0.0"
+Signal = "sleitnick/signal@1.5.0"
