@@ -24,7 +24,7 @@ local CharacterController = Knit.CreateController {
 
 -- Functions -- 
 
--- Methods --
+-- Methods --	
 
 function CharacterController:InitCharacter()
 	local Character = CharacterClass.new(Player)
@@ -33,7 +33,7 @@ function CharacterController:InitCharacter()
 	trove:Connect(RunService.Heartbeat, function(dt)
 		Character:Update(dt)
 	end)
-	
+
 	Player.Character:WaitForChild("Humanoid").Died:Connect(function()
 		if trove then
 			trove:Destroy()

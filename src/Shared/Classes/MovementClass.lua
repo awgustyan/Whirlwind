@@ -160,8 +160,13 @@ function Movement.new(Player : Player, PhysicsController)
 			_db = false,
 		},
 		Slam = {
+			KeyBinds = {Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl},
 			DBDuration = 0.3,
-			SlamSpeed = 140,
+			Speed = 140,
+			RecoilJumpTimeFrame = 0.5,
+
+			_fallTime = 0,
+			_lastLandingTick = tick(),
 			
 			_slamEnding = false,
 			_active = false,
@@ -224,6 +229,15 @@ function Movement:_bindAbilities()
 		
 		if userInputState == Enum.UserInputState.End then
 			self:SlideEnd(true)
+			return Enum.ContextActionResult.Sink;
+		end
+
+		return Enum.ContextActionResult.Pass;
+	end);
+
+	self:_bind("Slam", self.AbilityInfo.Slam.KeyBinds, function(actionName, userInputState, input)
+		if userInputState == Enum.UserInputState.Begin then
+			self:SlamStart()
 			return Enum.ContextActionResult.Sink;
 		end
 
@@ -404,7 +418,7 @@ function Movement:Dash(DirectionVector)
 		self._movementTrack:Stop()
 	end
 	
-	self._movementTrack = self.Humanoid:LoadAnimation(animation)
+	self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
 	self._movementTrack:Play(0, AbilityInfo._order, 1.4)
 	
 	-- Rotate the player in the dash direction
@@ -496,7 +510,13 @@ function Movement:Jump(DirectionVector)
 			self.HRT.AssemblyLinearVelocity += cameraDirection * 15
 		end)
 	else
-		self.HRT.AssemblyLinearVelocity += Vector3.new(0, self._jumpPower, 0)
+		local ExtraRecoilJumpVelocity = 0
+
+		if tick() - self.AbilityInfo.Slam._lastLandingTick < self.AbilityInfo.Slam.RecoilJumpTimeFrame then
+			ExtraRecoilJumpVelocity = math.clamp(self.AbilityInfo.Slam._fallTime * self.AbilityInfo.Slam.Speed * 0.9, 0, 90)
+		end
+
+		self.HRT.AssemblyLinearVelocity += Vector3.new(0, self._jumpPower + ExtraRecoilJumpVelocity, 0)
 	end
 	
 	self:SlideEnd(false)
@@ -510,7 +530,7 @@ function Movement:Jump(DirectionVector)
 		self._movementTrack:Stop()
 	end
 
-	self._movementTrack = self.Humanoid:LoadAnimation(animation)
+	self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
 	self._movementTrack:Play()
 end
 
@@ -553,7 +573,7 @@ function Movement:Landing()
 	animation.AnimationId = "rbxassetid://14443686855"
 
 	if not self._movementTrack or not self._movementTrack.IsPlaying then
-		self._movementTrack = self.Humanoid:LoadAnimation(animation)
+		self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
 		self._movementTrack:Play(0, 1, 1.6)
 	end
 end
@@ -595,7 +615,7 @@ function Movement:SlamStart()
 		self._movementTrack:Stop()
 	end
 
-	self._movementTrack = self.Humanoid:LoadAnimation(animation)
+	self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
 	self._movementTrack:Play()
 
 	-- VFX
@@ -616,14 +636,17 @@ function Movement:SlamStart()
 	-- Move connection
 
 	AbilityInfo._active = true
+	AbilityInfo._fallTime = 0
 
 	AbilityInfo._heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
 		if self.HipHeightObject.OnGround then
+			AbilityInfo._lastLandingTick = tick()
 			self:SlamEnd()
 			return
 		end
 		
-		self.HRT.AssemblyLinearVelocity = Vector3.new(0, -AbilityInfo.SlamSpeed, 0)
+		AbilityInfo._fallTime += dt
+		self.HRT.AssemblyLinearVelocity = Vector3.new(0, -AbilityInfo.Speed, 0)
 	end)
 end
 
@@ -730,7 +753,7 @@ function Movement:SlideStart(DirectionVector)
 		self._movementTrack:Stop()
 	end
 
-	self._movementTrack = self.Humanoid:LoadAnimation(animation)
+	self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
 	self._movementTrack:Play()
 	
 	if UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then

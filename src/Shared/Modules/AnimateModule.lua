@@ -1,9 +1,3 @@
-local folder = script.AnimateChildrenFolder:GetChildren()
-
-for i,v in pairs(folder) do
-	v.Parent = script
-end
-
 local function animate(char, characterController)
     local findExistingAnimationInSet
     local configureAnimationSet
@@ -729,37 +723,6 @@ local function animate(char, characterController)
             toolAnimInstance = nil
             toolAnimTime = 0
         end
-	end
-	
-	-- emote bindable hook
-	script:WaitForChild("PlayEmote").OnInvoke = function(emote)
-		-- Only play emotes when idling
-		if pose ~= "Standing" then
-			return
-		end
-
-		if emoteNames[emote] ~= nil then
-			-- Default emotes
-			playAnimation(emote, EMOTE_TRANSITION_TIME, Humanoid)
-
-			if userPlayEmoteByIdAnimTrackReturn then
-				return true, currentAnimTrack
-			else
-				return true
-			end
-		elseif typeof(emote) == "Instance" and emote:IsA("Animation") then
-			-- Non-default emotes
-			playEmote(emote, EMOTE_TRANSITION_TIME, Humanoid)
-
-			if userPlayEmoteByIdAnimTrackReturn then
-				return true, currentAnimTrack
-			else
-				return true
-			end
-		end
-
-		-- Return false to indicate that the emote could not be played
-		return false
 	end
     
     -- connect events
