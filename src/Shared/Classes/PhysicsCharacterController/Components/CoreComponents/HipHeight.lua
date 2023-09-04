@@ -36,11 +36,13 @@ function HipHeight.new(data : PhysicsCharacterController)
     self.PhysicsCharacterController = data
     local rootPart = self.PhysicsCharacterController.RootPart
     --corners based on birds eye view, assumes hrp is (0,0,0)
-    local topRightCorner = rootPart.Size*Vector3.new(1,0,1)/2
+    local topRightCorner = rootPart.Size * Vector3.new(1,0,1) / 2
 
-    local divisions = 3
-    local xDivisionSize = 2*topRightCorner.X/divisions
-    local zDivisionSize = 2*topRightCorner.Z/divisions
+    local divisions = 2
+    local offset = 2
+
+    local xDivisionSize = (2 * topRightCorner.X / divisions) / offset
+    local zDivisionSize = (2 * topRightCorner.Z / divisions) / offset
 
     local attachments = {}
     local vectorForces = {}
@@ -53,15 +55,20 @@ function HipHeight.new(data : PhysicsCharacterController)
 
     --0,1,2,3,4,5
     --Multiple raycasts across rootpart
+
+    local offX = xDivisionSize * divisions / offset
+    local offZ = zDivisionSize * divisions / offset
+
     for x = 0, divisions  do
         for z = 0, divisions do
-            local position = Vector3.new(xDivisionSize*x-topRightCorner.X,0,zDivisionSize*z-topRightCorner.Z)
+            local position = Vector3.new(xDivisionSize*x - topRightCorner.X + offX,0,zDivisionSize*z-topRightCorner.Z + offZ)
             local attachment = Instance.new("Attachment")
             attachment.Position = position
             attachment.Parent = rootPart
             table.insert(attachments, attachment)
         end
     end
+
     local model = data._Model
 
     local raycastParams = RaycastParams.new()
@@ -120,6 +127,7 @@ local function hipheightRaycast(hipheightAttachments, raycastLength : number, ra
     local GlobalRaycastResult
     local averageHitPosition = Vector3.zero
     local i = 0
+
     for _, attachment : Attachment in pairs(hipheightAttachments) do
         local raycastResult = workspace:Raycast(attachment.WorldPosition, DOWN_VECTOR*raycastLength, rayParams)
         if raycastResult then

@@ -176,7 +176,7 @@ function Movement.new(Player : Player, PhysicsController)
 		Slide = {
 			KeyBinds = {Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl},
 			DBDuration = 0,
-			StartingBoost = 35,
+			StartingBoost = 5,
 			MinimalHorizontalSpeed = 40, -- Units / Seconds,
 			
 			_active = false,
@@ -782,7 +782,7 @@ function Movement:SlideStart(DirectionVector)
 	
 	-- Move connection
 	
-	self.FrictionWeightQueue:Add("Slide", 5, 0)
+	self.FrictionWeightQueue:Add("Slide", 5, 100)
 	self.DragWeightQueue:Add("Slide", 5, 0)
 
 	local adjustedDirection = self.HRT.CFrame:VectorToWorldSpace(DirectionVector)
