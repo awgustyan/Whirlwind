@@ -70,7 +70,7 @@ local function animate(char, characterController)
 			{ id = "http://www.roblox.com/asset/?id=14443787313", weight = 9 }
                 },
         walk = 	{ 	
-			{ id = "http://www.roblox.com/asset/?id=507777826", weight = 10 } 
+			{ id = "http://www.roblox.com/asset/?id=14531574465", weight = 10 } 
                 }, 
         run = 	{
 			{ id = "http://www.roblox.com/asset/?id=14531574465", weight = 10 } 
@@ -468,6 +468,7 @@ local function animate(char, characterController)
              
             -- play the animation
 			currentAnimTrack:Play(transitionTime)
+            print("played anim: " .. animName)
             currentAnim = animName
             currentAnimInstance = anim
     
@@ -572,8 +573,8 @@ local function animate(char, characterController)
     -- STATE CHANGE HANDLERS
     
     function onRunning(speed)
-        local movedDuringEmote =
-            userEmoteToRunThresholdChange and currentlyPlayingEmote and Humanoid.MoveDirection == Vector3.new(0, 0, 0)
+
+        local movedDuringEmote = userEmoteToRunThresholdChange and currentlyPlayingEmote and Humanoid.MoveDirection == Vector3.new(0, 0, 0)
         local speedThreshold = movedDuringEmote and Humanoid.WalkSpeed or 0.75
         if speed > speedThreshold then
             local scale = char:GetAttribute("WalkSpeed") or 16.0

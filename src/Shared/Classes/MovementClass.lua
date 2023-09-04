@@ -53,6 +53,16 @@ local function isPressed(keyCode)
 	return false
 end
 
+local function anyPressed(keyCodes)
+	for _, keycode in pairs(keyCodes) do
+		if isPressed(keycode) then
+			return true
+		end
+	end
+
+	return false
+end
+
 -- Class --
 
 function Movement.new(Player : Player, PhysicsController)
@@ -157,6 +167,7 @@ function Movement.new(Player : Player, PhysicsController)
 			JumpDisableTime = 0.4,
 			
 			_previousOnGround = true,
+			_heartbeatConnection = nil,
 			_db = false,
 		},
 		Slam = {
@@ -183,10 +194,22 @@ function Movement.new(Player : Player, PhysicsController)
 			_alignOrientation = nil,
 			_heartbeatConnection = nil,
 			_db = false,
+		},
+		Run  = {
+			KeyBinds = {Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D},
+			DBDuration = 0,
+
+			_active = false,
+			_db = false,
 		}
 	}
 	
 	self:_bindAbilities()
+
+	-- Start up	 some abilities
+
+	self:LandingStart()
+	self:RunStart()
 	
 	return self
 end
@@ -223,7 +246,6 @@ function Movement:_bindAbilities()
 	self:_bind("Slide", self.AbilityInfo.Slide.KeyBinds, function(actionName, userInputState, input)
 		if userInputState == Enum.UserInputState.Begin then
 			self:SlideStart(vectorDirectionWASD(UIS:GetKeysPressed()))
-			self:SlamStart()
 			return Enum.ContextActionResult.Sink;
 		end
 		
@@ -335,14 +357,6 @@ function Movement:Update(dt)
 
 		TweenService:Create(self.Camera, TweenInfo.new(0.01, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = self.BaseFOV + extraVelocityFOV}):Play()
 	end
-	
-	-- Abilities
-	
-	if self.AbilityInfo.Landing._previousOnGround == false and self.HipHeightObject.OnGround then
-		self:Landing()
-	end
-	
-	self.AbilityInfo.Landing._previousOnGround = self.HipHeightObject.OnGround
 	
 	-- UI
 	
@@ -534,7 +548,7 @@ function Movement:Jump(DirectionVector)
 	self._movementTrack:Play()
 end
 
-function Movement:Landing()
+function Movement:LandingStart()
 	local AbilityInfo = self.AbilityInfo.Landing
 
 	-- Debounce and stamina
@@ -552,29 +566,56 @@ function Movement:Landing()
 	task.delay(AbilityInfo.DBDuration, function()
 		AbilityInfo._db = false
 	end)
-
-	-- Cancel other moves
-
-	-- Fire server
 	
-	if not self.AbilityInfo.Slam._slamEnding then
-		self.CharacterService.AbilityRemote:Fire("Landing", {
+	AbilityInfo._heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
+		
+		if self.AbilityInfo.Landing._previousOnGround or not self.HipHeightObject.OnGround then
+			self.AbilityInfo.Landing._previousOnGround = self.HipHeightObject.OnGround
+			return
+		end
+		
+		self.AbilityInfo.Landing._previousOnGround = self.HipHeightObject.OnGround
 
-		})
+		-- Fire server
+		
+		if not self.AbilityInfo.Slam._slamEnding then
+			self.CharacterService.AbilityRemote:Fire("Landing", {
 
-		self.VFXController:ClientVFX("Landing", {
-			Character = self.Character
-		})
+			})
+
+			self.VFXController:ClientVFX("Landing", {
+				Character = self.Character
+			})
+		end
+		-- Animation
+
+		local animation = Instance.new("Animation")
+		animation.AnimationId = "rbxassetid://14443686855"
+
+		if not self._movementTrack or not self._movementTrack.IsPlaying then
+			self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
+			self._movementTrack:Play(0, 1, 1.6)
+		end		
+
+		self.HRT.AssemblyLinearVelocity *= Vector3.new(1, 0, 1)
+	end)
+end
+
+function Movement:LandingEnd()
+	local AbilityInfo = self.AbilityInfo.Landing
+
+	if AbilityInfo._db then
+		return
 	end
 
-	-- Animation
+	AbilityInfo._db = true
 
-	local animation = Instance.new("Animation")
-	animation.AnimationId = "rbxassetid://14443686855"
+	task.delay(AbilityInfo.DBDuration, function()
+		AbilityInfo._db = false
+	end)
 
-	if not self._movementTrack or not self._movementTrack.IsPlaying then
-		self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
-		self._movementTrack:Play(0, 1, 1.6)
+	if AbilityInfo._heartbeatConnection then
+		AbilityInfo._heartbeatConnection:Disconnect()
 	end
 end
 
@@ -865,6 +906,64 @@ function Movement:SlideEnd(RemoveVelocity)
 	if self.HipHeightObject.OnGround and (RemoveVelocity and not self.AbilityInfo.Jump._active) then
 		self.HRT.Velocity  = Vector3.zero
 	end
+end
+
+function Movement:RunStart()
+
+	local AbilityInfo = self.AbilityInfo.Run
+
+	-- Debounce and stamina
+
+	AbilityInfo._db = true
+
+	task.delay(AbilityInfo.DBDuration, function()
+		AbilityInfo._db = false
+	end)
+
+	-- Animation
+	--[[
+	AbilityInfo._heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
+		local anyPressed = anyPressed(AbilityInfo.KeyBinds)
+		
+		if (anyPressed and not AbilityInfo.anyPressedLast) then
+			local animation = Instance.new("Animation")
+			animation.AnimationId = "rbxassetid://14531574465"
+
+			self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
+			self._movementTrack:Play()
+			
+			AbilityInfo._active = true
+		elseif not anyPressed and AbilityInfo.anyPressedLast and AbilityInfo._active then
+
+			self._movementTrack:Stop()
+			AbilityInfo._active = false
+		end
+
+		AbilityInfo.anyPressedLast = anyPressed
+	end)]]
+end
+
+function Movement:RunEnd()
+
+	local AbilityInfo = self.AbilityInfo.Run
+
+	-- Debounce and stamina
+
+	if AbilityInfo._db then
+		return
+	end
+
+	-- Animation
+
+	if AbilityInfo._heartbeatConnection then
+		AbilityInfo._heartbeatConnection:Disconnect()
+	end
+
+	if self._movementTrack and AbilityInfo._active then
+		self._movementTrack:Stop()
+	end
+
+	AbilityInfo._active = false
 end
 
 return Movement

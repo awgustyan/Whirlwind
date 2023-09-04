@@ -417,13 +417,11 @@ function VFX:SlideStart(InfoTable)
 		if not workspace:Raycast(InfoTable.Character.HumanoidRootPart.Position, Vector3.new(0, -4, 0), Params) then
 			CachedInfo._wallCling:Pause()
 			switchEmitters(CachedInfo._sparks, false)
-			switchEmitters(CachedInfo._windStripes, false)
 			return
 		end
 		
 		CachedInfo._wallCling:Resume()
 		switchEmitters(CachedInfo._sparks, true)
-		switchEmitters(CachedInfo._windStripes, true)
 	end)
 end
 
