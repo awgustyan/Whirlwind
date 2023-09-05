@@ -70,7 +70,7 @@ local function animate(char, characterController)
 			{ id = "http://www.roblox.com/asset/?id=14443787313", weight = 9 }
                 },
         walk = 	{ 	
-			{ id = "http://www.roblox.com/asset/?id=14531574465", weight = 10 } 
+			{ id = "http://www.roblox.com/asset/?id=14693627960", weight = 10 } 
                 }, 
         run = 	{
 			{ id = "http://www.roblox.com/asset/?id=14531574465", weight = 10 } 
@@ -343,6 +343,11 @@ local function animate(char, characterController)
             if AnimationSpeedDampeningObject ~= nil then
                 scale = 1 + (Humanoid.HipHeight - HumanoidHipHeight) * AnimationSpeedDampeningObject.Value / HumanoidHipHeight
             end
+
+            if scale <= 0 then
+                return 1
+            end
+
             return scale
         end	
         return 1
@@ -463,6 +468,7 @@ local function animate(char, characterController)
             currentAnimSpeed = 1.0
         
             -- load it to the humanoid; get AnimationTrack
+
             currentAnimTrack = humanoid:LoadAnimation(anim)
             currentAnimTrack.Priority = Enum.AnimationPriority.Core
              
@@ -476,6 +482,7 @@ local function animate(char, characterController)
             if (currentAnimKeyframeHandler ~= nil) then
                 currentAnimKeyframeHandler:disconnect()
             end
+            
             currentAnimKeyframeHandler = currentAnimTrack.KeyframeReached:connect(keyFrameReachedFunc)
             
             -- check to see if we need to blend a walk/run animation

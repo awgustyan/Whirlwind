@@ -37,6 +37,8 @@ function Character.new(Player : Player)
         
 	task.spawn(AnimateFunction, self.Character, self.PhysicsController)
 	
+	self.Character:WaitForChild("Animate").Enabled = false
+
 	return self
 end
 
