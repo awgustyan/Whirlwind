@@ -474,7 +474,7 @@ local function animate(char, characterController)
              
             -- play the animation
 			currentAnimTrack:Play(transitionTime)
-            print("played anim: " .. animName)
+          --  print("played anim: " .. animName)
             currentAnim = animName
             currentAnimInstance = anim
     

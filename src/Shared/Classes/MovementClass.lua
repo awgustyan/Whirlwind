@@ -164,8 +164,8 @@ function Movement.new(Player : Player, PhysicsController)
 		},
 		Landing = {
 			DBDuration = 0,
-			JumpDisableTime = 0.4,
 			
+			_lastLandingTick = tick(),
 			_previousOnGround = true,
 			_heartbeatConnection = nil,
 			_db = false,
@@ -174,7 +174,7 @@ function Movement.new(Player : Player, PhysicsController)
 			KeyBinds = {Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl},
 			DBDuration = 0.3,
 			Speed = 140,
-			RecoilJumpTimeFrame = 0.5,
+			RecoilJumpTimeFrame = 0.3,
 
 			_fallTime = 0,
 			_lastLandingTick = tick(),
@@ -195,13 +195,6 @@ function Movement.new(Player : Player, PhysicsController)
 			_heartbeatConnection = nil,
 			_db = false,
 		},
-		Run  = {
-			KeyBinds = {Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D},
-			DBDuration = 0,
-
-			_active = false,
-			_db = false,
-		}
 	}
 	
 	self:_bindAbilities()
@@ -209,7 +202,6 @@ function Movement.new(Player : Player, PhysicsController)
 	-- Start up	 some abilities
 
 	self:LandingStart()
-	self:RunStart()
 	
 	return self
 end
@@ -472,7 +464,7 @@ function Movement:Jump(DirectionVector)
 	local cameraDirection = CFrame.new(Vector3.zero, self.Camera.CFrame.LookVector * Vector3.new(1, 0, 1)):VectorToWorldSpace(DirectionVector)
 	
 	-- Debounce and stamina
-	
+
 	if not self.HipHeightObject.OnGround then
 		return
 	end
@@ -508,20 +500,20 @@ function Movement:Jump(DirectionVector)
 	if self.AbilityInfo.Dash._active and self._stamina > 1 then
 		self._stamina += -1
 		
-		self.HRT.AssemblyLinearVelocity += Vector3.new(0, 60, 0)
+		self.HRT.AssemblyLinearVelocity += Vector3.new(0, 50, 0)
 		
 		task.spawn(function()
 			RunService.Heartbeat:Wait()
 			
-			self.HRT.AssemblyLinearVelocity += cameraDirection * 60
+			self.HRT.AssemblyLinearVelocity += cameraDirection * 65
 		end)
 	elseif self.AbilityInfo.Slide._active then
-		self.HRT.AssemblyLinearVelocity += Vector3.new(0, self._jumpPower, 0)
+		self.HRT.AssemblyLinearVelocity += Vector3.new(0, 50, 0)
 
 		task.spawn(function()
 			RunService.Heartbeat:Wait()
 
-			self.HRT.AssemblyLinearVelocity += cameraDirection * 15
+			self.HRT.AssemblyLinearVelocity += cameraDirection * 20
 		end)
 	else
 		local ExtraRecoilJumpVelocity = 0
@@ -569,12 +561,13 @@ function Movement:LandingStart()
 	
 	AbilityInfo._heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
 		
-		if self.AbilityInfo.Landing._previousOnGround or not self.HipHeightObject.OnGround then
-			self.AbilityInfo.Landing._previousOnGround = self.HipHeightObject.OnGround
+		if AbilityInfo._previousOnGround or not self.HipHeightObject.OnGround then
+			AbilityInfo._previousOnGround = self.HipHeightObject.OnGround
 			return
 		end
 		
-		self.AbilityInfo.Landing._previousOnGround = self.HipHeightObject.OnGround
+		AbilityInfo._previousOnGround = self.HipHeightObject.OnGround
+		AbilityInfo._lastLandingTick = tick()
 
 		-- Fire server
 		
@@ -587,6 +580,7 @@ function Movement:LandingStart()
 				Character = self.Character
 			})
 		end
+
 		-- Animation
 
 		local animation = Instance.new("Animation")
@@ -597,7 +591,7 @@ function Movement:LandingStart()
 			self._movementTrack:Play(0, 1, 1.6)
 		end		
 
-		self.HRT.AssemblyLinearVelocity *= Vector3.new(1, 0, 1)
+		--self.HRT.AssemblyLinearVelocity *= Vector3.new(1, 0, 1)
 	end)
 end
 
@@ -906,64 +900,6 @@ function Movement:SlideEnd(RemoveVelocity)
 	if self.HipHeightObject.OnGround and (RemoveVelocity and not self.AbilityInfo.Jump._active) then
 		self.HRT.Velocity  = Vector3.zero
 	end
-end
-
-function Movement:RunStart()
-
-	local AbilityInfo = self.AbilityInfo.Run
-
-	-- Debounce and stamina
-
-	AbilityInfo._db = true
-
-	task.delay(AbilityInfo.DBDuration, function()
-		AbilityInfo._db = false
-	end)
-
-	-- Animation
-	--[[
-	AbilityInfo._heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
-		local anyPressed = anyPressed(AbilityInfo.KeyBinds)
-		
-		if (anyPressed and not AbilityInfo.anyPressedLast) then
-			local animation = Instance.new("Animation")
-			animation.AnimationId = "rbxassetid://14531574465"
-
-			self._movementTrack = self.Humanoid.Animator:LoadAnimation(animation)
-			self._movementTrack:Play()
-			
-			AbilityInfo._active = true
-		elseif not anyPressed and AbilityInfo.anyPressedLast and AbilityInfo._active then
-
-			self._movementTrack:Stop()
-			AbilityInfo._active = false
-		end
-
-		AbilityInfo.anyPressedLast = anyPressed
-	end)]]
-end
-
-function Movement:RunEnd()
-
-	local AbilityInfo = self.AbilityInfo.Run
-
-	-- Debounce and stamina
-
-	if AbilityInfo._db then
-		return
-	end
-
-	-- Animation
-
-	if AbilityInfo._heartbeatConnection then
-		AbilityInfo._heartbeatConnection:Disconnect()
-	end
-
-	if self._movementTrack and AbilityInfo._active then
-		self._movementTrack:Stop()
-	end
-
-	AbilityInfo._active = false
 end
 
 return Movement
