@@ -14,7 +14,7 @@ export type PhysicsCharacterController = {
 
 local ZERO_VECTOR = Vector3.zero
 local HIPHEIGHT_ATTRIBUTE_NAME = "HipHeightIncludingTorso" --Normal hipheight doesn't include the size of the root torso, this controller one does tho
-local HIPHEIGHT_TO_RAY_LENGTH_RATIO = 2
+local HIPHEIGHT_TO_RAY_LENGTH_RATIO = 1.5
 
 local HipHeight = {}
 HipHeight.__index = HipHeight

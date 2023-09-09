@@ -517,12 +517,14 @@ function Movement:Jump(DirectionVector)
 		end)
 	else
 		local ExtraRecoilJumpVelocity = 0
+		print(math.max(self._jumpPower - self.HRT.AssemblyLinearVelocity.Y, 0))
 
 		if tick() - self.AbilityInfo.Slam._lastLandingTick < self.AbilityInfo.Slam.RecoilJumpTimeFrame then
 			ExtraRecoilJumpVelocity = math.clamp(self.AbilityInfo.Slam._fallTime * self.AbilityInfo.Slam.Speed * 0.9, 0, 90)
 		end
 
-		self.HRT.AssemblyLinearVelocity += Vector3.new(0, self._jumpPower + ExtraRecoilJumpVelocity, 0)
+		self.HRT.AssemblyLinearVelocity += Vector3.new(0, (math.max(self._jumpPower - self.HRT.AssemblyLinearVelocity.Y, 0)) + ExtraRecoilJumpVelocity, 0)
+
 	end
 	
 	self:SlideEnd(false)
